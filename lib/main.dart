@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -109,40 +110,66 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                   ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Vaccination Progress',
+                  LayoutBuilder(builder: (context, constraints) {
+                    final contentWidth = max(constraints.maxWidth / 2, 200.0);
+                    final isSmall = constraints.maxWidth / 2 < 200.0;
+                    return Wrap(
+                      children: <Widget>[
+                        SizedBox(
+                          width: contentWidth,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Vaccination Progress',
+                                  textAlign: TextAlign.center,
+                                  style: isSmall
+                                      ? null
+                                      : Theme.of(context).textTheme.headline4,
+                                ),
+                                Text(
+                                  "${currentData.value / 2}%",
+                                  textAlign: TextAlign.center,
+                                  style: isSmall
+                                      ? Theme.of(context).textTheme.headline4
+                                      : Theme.of(context).textTheme.headline2,
+                                ),
+                              ],
                             ),
-                            Text(
-                              "${currentData.value / 2}%",
-                              style: Theme.of(context).textTheme.headline4,
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              '2021 Progress',
+                        SizedBox(
+                          width: contentWidth,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '2021 Progress',
+                                  textAlign: TextAlign.center,
+                                  style: isSmall
+                                      ? null
+                                      : Theme.of(context).textTheme.headline4,
+                                ),
+                                Text(
+                                  "$yearProgress%",
+                                  textAlign: TextAlign.center,
+                                  style: isSmall
+                                      ? Theme.of(context).textTheme.headline4
+                                      : Theme.of(context).textTheme.headline2,
+                                ),
+                              ],
                             ),
-                            Text(
-                              "$yearProgress%",
-                              style: Theme.of(context).textTheme.headline4,
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    );
+                  }),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(32),
@@ -216,5 +243,5 @@ class VaccinationProgress {
 }
 
 String _footerNote() => """
-Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) - __number of doses per 100 people, divided by 2__ • Source code available at [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021) • Made with 💙 from Home. • Copyright (c) 2021 Łukasz Wiśniewski"""
+Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) • Number of doses per 100 people, divided by 2 • Source code available at [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021) • Made with 💙 from Home, Berlin. • Copyright (c) 2021 Łukasz Wiśniewski"""
     .trim();

@@ -1,8 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 void main() {
   runApp(VaccineVs2021App());
@@ -42,7 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   List<String> get countries {
-    final items = data == null ? ["Germany"] : List<String>.from(data.keys)
+    final items = data == null ? ["World"] : List<String>.from(data.keys)
       ..sort();
     return items;
   }
@@ -74,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
           PopupMenuButton<String>(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Center(child: Text("Pick County")),
+              child: Center(child: Text("Pick Country")),
             ),
             onSelected: (String newValue) {
               setState(() {
@@ -142,9 +144,20 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                   Expanded(
-                    child: Center(
-                      child: Text(
-                        "Based on data from ourworldindata.org. Source code available at github.com",
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          MarkdownBody(
+                            onTapLink: (text, href, title) {
+                              url_launcher.launch(href);
+                            },
+                            data: _footerNote(),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -201,3 +214,7 @@ class VaccinationProgress {
     return "$runtimeType[$name:$value]";
   }
 }
+
+String _footerNote() => """
+Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) - __number of doses per 100 people, divided by 2__ • Source code available at [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021) • Made with 💙 from Home. • Copyright (c) 2021 Łukasz Wiśniewski"""
+    .trim();

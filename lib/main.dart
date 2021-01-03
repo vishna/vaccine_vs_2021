@@ -33,6 +33,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final formatter = NumberFormat("0.0#", "en_US");
   Map<String, VaccinationProgress> data;
   String selectedCountry = "World";
 
@@ -51,11 +52,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String get yearProgress {
-    final f = NumberFormat("0.0#", "en_US");
     final now = DateTime.now();
     final diff = now.difference(new DateTime(now.year, 1, 1, 0, 0));
     final diffInDays = diff.inDays + 1;
-    return f.format(((diffInDays.toDouble() / 365.0) * 100.0));
+    return formatter.format(((diffInDays.toDouble() / 365.0) * 100.0));
   }
 
   @override
@@ -131,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       : Theme.of(context).textTheme.headline4,
                                 ),
                                 Text(
-                                  "${currentData.value / 2}%",
+                                  "${formatter.format(currentData.value / 2)}%",
                                   textAlign: TextAlign.center,
                                   style: isSmall
                                       ? Theme.of(context).textTheme.headline4
@@ -243,5 +243,5 @@ class VaccinationProgress {
 }
 
 String _footerNote() => """
-Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) • Number of doses per 100 people, divided by 2 • Source code available at [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021) • Made with 💙 from Home, Berlin. • Copyright (c) 2021 Łukasz Wiśniewski"""
+Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) • Number of doses per 100 people, divided by 2 • Source code available at [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021/blob/main/lib/main.dart) • Made with 💙 from Home, Berlin. • Copyright (c) 2021 Łukasz Wiśniewski"""
     .trim();

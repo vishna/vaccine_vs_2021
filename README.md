@@ -1,16 +1,5 @@
-# vaccine_vs_2021
+# Vaccine vs 2021
 
-A new Flutter project.
+[<img width="1040" alt="Screenshot 2021-01-04 at 11 24 53" src="https://user-images.githubusercontent.com/121164/103525536-afab8a00-4e7f-11eb-8ba2-292282e3a8b7.png">](https://vaxx2021.codemagic.app/)
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Live demo at [vaxx2021.codemagic.app](https://vaxx2021.codemagic.app/)

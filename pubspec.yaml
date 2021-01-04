@@ -25,6 +25,7 @@ dependencies:
   intl: ^0.16.1
   flutter_markdown: ^0.5.1
   url_launcher: ^5.7.10
+  voyager: ^3.0.0-nullsafety.2
   flutter:
     sdk: flutter
 
@@ -35,8 +36,6 @@ dependencies:
 
 dev_dependencies:
   flutter_test:
-    sdk: flutter
-  integration_test:
     sdk: flutter
 
 # For information on the generic Dart part of this file, see the

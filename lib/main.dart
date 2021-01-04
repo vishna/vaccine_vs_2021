@@ -6,36 +6,110 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
+import 'package:voyager/voyager.dart';
 
-void main() {
-  runApp(VaccineVs2021App());
+final paths = loadPathsFromYamlSync('''
+'/:country':
+  type: home
+  widget: HomeWidget
+''');
+
+final plugins = [
+  WidgetPlugin({"HomeWidget": (context) => HomePage()})
+];
+
+final appKey = GlobalKey<_VaccineVs2021AppState>();
+
+void main() async {
+  runApp(VaccineVs2021App(
+      key: appKey, router: VoyagerRouter.from(paths, plugins)));
 }
 
-class VaccineVs2021App extends StatelessWidget {
-  // This widget is the root of your application.
+class VaccineVs2021App extends StatefulWidget {
+  VaccineVs2021App({Key key, this.router}) : super(key: key);
+  final VoyagerRouter router;
+
+  @override
+  _VaccineVs2021AppState createState() => _VaccineVs2021AppState();
+}
+
+class _VaccineVs2021AppState extends State<VaccineVs2021App> {
+  var stack = VoyagerStack([VoyagerPage("/world")]);
+
+  void updateStack(VoyagerStack value) {
+    setState(() {
+      stack = value;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Vaccine vs 2021',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return VoyagerStackApp(
+      stack: stack,
+      router: widget.router,
+      createApp: (context, parser, delegate) => MaterialApp.router(
+        title: 'Vaccine vs 2021',
+        routerDelegate: delegate,
+        routeInformationParser: parser,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
       ),
-      home: MyHomePage(),
+      onBackPressed: () {
+        // ignore
+      },
+      onNewPage: (page) {
+        if (page is VoyagerStack) {
+          setState(() {
+            stack = page;
+          });
+        }
+
+        if (page is VoyagerPage) {
+          setState(() {
+            stack = VoyagerStack([page]);
+          });
+        }
+      },
+      onInitialPage: (page) {
+        if (page is VoyagerPage) {
+          if (page.path != "/") {
+            setState(() {
+              stack = VoyagerStack([page]);
+            });
+          }
+        }
+      },
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key}) : super(key: key);
+class HomePage extends StatefulWidget {
+  HomePage({Key key}) : super(key: key);
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _HomePageState extends State<HomePage> {
   final formatter = NumberFormat("0.0#", "en_US");
   Map<String, VaccinationProgress> data;
-  String selectedCountry = "World";
+
+  /// whatever the param is in the url
+  String _selectedCountryKey = "world";
+
+  /// mapps the param to entry from json
+  String get selectedCountry {
+    final c = countries;
+    final index = c.indexWhere((element) =>
+        element.toLowerCase().replaceAll(" ", "_") ==
+        _selectedCountryKey.toLowerCase());
+    if (index == -1) {
+      return "World";
+    } else {
+      return c[index];
+    }
+  }
 
   VaccinationProgress get currentData {
     if (data == null) {
@@ -61,141 +135,157 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    _selectedCountryKey = context.voyager.path.replaceAll("/", "");
     fetchVaccineData().then((value) {
       setState(() {
-        data = value;
+        if (mounted) {
+          data = value;
+        }
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Vaccine vs 2021"),
-        actions: [
-          PopupMenuButton<String>(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Center(child: Text("Pick Country")),
+    return Hero(
+      tag: "hero_scaffold",
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Vaccine vs 2021"),
+          actions: [
+            PopupMenuButton<String>(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Center(child: Text("Pick Country")),
+              ),
+              onSelected: (String newValue) {
+                setState(() {
+                  final newPath =
+                      "/$newValue".toLowerCase().replaceAll(" ", "_");
+                  appKey.currentState.updateStack(VoyagerStack(
+                    [
+                      VoyagerPage(newPath),
+                    ],
+                  ));
+                });
+              },
+              itemBuilder: (BuildContext context) {
+                return countries.map((String choice) {
+                  return PopupMenuItem<String>(
+                    value: choice,
+                    child: Text(choice),
+                  );
+                }).toList();
+              },
             ),
-            onSelected: (String newValue) {
-              setState(() {
-                selectedCountry = newValue;
-              });
-            },
-            itemBuilder: (BuildContext context) {
-              return countries.map((String choice) {
-                return PopupMenuItem<String>(
-                  value: choice,
-                  child: Text(choice),
-                );
-              }).toList();
-            },
-          ),
-        ],
-      ),
-      body: data == null
-          ? Center(
-              child: CircularProgressIndicator(),
-            )
-          : Center(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        "$selectedCountry",
-                        style: Theme.of(context).textTheme.headline2,
+          ],
+        ),
+        body: data == null
+            ? Center(
+                child: CircularProgressIndicator(),
+              )
+            : Center(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          "$selectedCountry",
+                          style: Theme.of(context).textTheme.headline2,
+                        ),
                       ),
                     ),
-                  ),
-                  LayoutBuilder(builder: (context, constraints) {
-                    final contentWidth = max(constraints.maxWidth / 2, 200.0);
-                    final isSmall = constraints.maxWidth / 2 < 200.0;
-                    return Wrap(
-                      children: <Widget>[
-                        SizedBox(
-                          width: contentWidth,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Vaccination Progress',
-                                  textAlign: TextAlign.center,
-                                  style: isSmall
-                                      ? null
-                                      : Theme.of(context).textTheme.headline4,
-                                ),
-                                Text(
-                                  "${formatter.format(currentData.value / 2)}%",
-                                  textAlign: TextAlign.center,
-                                  style: isSmall
-                                      ? Theme.of(context).textTheme.headline4
-                                      : Theme.of(context).textTheme.headline2,
-                                ),
-                              ],
+                    LayoutBuilder(builder: (context, constraints) {
+                      final contentWidth = max(constraints.maxWidth / 2, 200.0);
+                      final isSmall = constraints.maxWidth / 2 < 200.0;
+                      return Wrap(
+                        children: <Widget>[
+                          SizedBox(
+                            width: contentWidth,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Vaccination Progress',
+                                    textAlign: TextAlign.center,
+                                    style: isSmall
+                                        ? null
+                                        : Theme.of(context).textTheme.headline4,
+                                  ),
+                                  Text(
+                                    "${formatter.format(currentData.value / 2)}%",
+                                    textAlign: TextAlign.center,
+                                    style: isSmall
+                                        ? Theme.of(context).textTheme.headline4
+                                        : Theme.of(context).textTheme.headline2,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          width: contentWidth,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '2021 Progress',
-                                  textAlign: TextAlign.center,
-                                  style: isSmall
-                                      ? null
-                                      : Theme.of(context).textTheme.headline4,
-                                ),
-                                Text(
-                                  "$yearProgress%",
-                                  textAlign: TextAlign.center,
-                                  style: isSmall
-                                      ? Theme.of(context).textTheme.headline4
-                                      : Theme.of(context).textTheme.headline2,
-                                ),
-                              ],
+                          SizedBox(
+                            width: contentWidth,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '2021 Progress',
+                                    textAlign: TextAlign.center,
+                                    style: isSmall
+                                        ? null
+                                        : Theme.of(context).textTheme.headline4,
+                                  ),
+                                  Text(
+                                    "$yearProgress%",
+                                    textAlign: TextAlign.center,
+                                    style: isSmall
+                                        ? Theme.of(context).textTheme.headline4
+                                        : Theme.of(context).textTheme.headline2,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          MarkdownBody(
-                            onTapLink: (text, href, title) {
-                              url_launcher.launch(href);
-                            },
-                            data: _footerNote(),
                           ),
                         ],
+                      );
+                    }),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            MarkdownBody(
+                              onTapLink: (text, href, title) {
+                                url_launcher.launch(href);
+                              },
+                              data: footerNote,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 }
 
+Map<String, VaccinationProgress> _cached;
 Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
+  if (_cached != null) {
+    return _cached;
+  }
   final response = await http.get(
       'https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita');
   final dataStr = response.body.split("//EMBEDDED_JSON")[1];
@@ -227,6 +317,7 @@ Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
       output[vp.name] = vp;
     }
   });
+  _cached = output;
 
   return output;
 }
@@ -242,6 +333,5 @@ class VaccinationProgress {
   }
 }
 
-String _footerNote() => """
-Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) • Number of doses per 100 people, divided by 2 • Source code available at [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021/blob/main/lib/main.dart) • Made with 💙 from Home, Berlin. • Copyright (c) 2021 Łukasz Wiśniewski"""
-    .trim();
+const footerNote =
+    """Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) • Number of doses per 100 people, divided by 2 • Source code available at [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021/blob/main/lib/main.dart) • Made with 💙 from Home, Berlin. • Copyright (c) 2021 Łukasz Wiśniewski""";

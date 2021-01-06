@@ -11,6 +11,7 @@ import 'package:voyager/voyager.dart';
 final paths = loadPathsFromYamlSync('''
 '/:country':
   type: home
+  country: '%{country}'
   widget: HomeWidget
 ''');
 
@@ -92,13 +93,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final formatter = NumberFormat("0.0#", "en_US");
-  Map<String, VaccinationProgress> data;
-
   /// whatever the param is in the url
   String _selectedCountryKey = "world";
 
-  /// mapps the param to entry from json
+  /// maps the param to entry from json
   String get selectedCountry {
     final c = countries;
     final index = c.indexWhere((element) =>
@@ -111,17 +109,18 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  VaccinationProgress get currentData {
-    if (data == null) {
+  VaccinationProgress get vaccinationProgress {
+    if (vaccineData == null) {
       return null;
     }
 
-    return data[selectedCountry];
+    return vaccineData[selectedCountry];
   }
 
   List<String> get countries {
-    final items = data == null ? ["World"] : List<String>.from(data.keys)
-      ..sort();
+    final items =
+        vaccineData == null ? ["World"] : List<String>.from(vaccineData.keys)
+          ..sort();
     return items;
   }
 
@@ -129,20 +128,20 @@ class _HomePageState extends State<HomePage> {
     final now = DateTime.now();
     final diff = now.difference(new DateTime(now.year, 1, 1, 0, 0));
     final diffInDays = diff.inDays + 1;
-    return formatter.format(((diffInDays.toDouble() / 365.0) * 100.0));
+    return ((diffInDays.toDouble() / 365.0) * 100.0).toStringPretty();
   }
 
   @override
   void initState() {
     super.initState();
-    _selectedCountryKey = context.voyager.path.replaceAll("/", "");
-    fetchVaccineData().then((value) {
-      setState(() {
+    _selectedCountryKey = context.voyager["country"];
+    if (vaccineData == null) {
+      fetchVaccineData().then((value) {
         if (mounted) {
-          data = value;
+          setState(() {});
         }
       });
-    });
+    }
   }
 
   @override
@@ -180,7 +179,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        body: data == null
+        body: vaccineData == null
             ? Center(
                 child: CircularProgressIndicator(),
               )
@@ -216,7 +215,7 @@ class _HomePageState extends State<HomePage> {
                                         : Theme.of(context).textTheme.headline4,
                                   ),
                                   Text(
-                                    "${formatter.format(currentData.value / 2)}%",
+                                    "${(vaccinationProgress.value / 2).toStringPretty()}%",
                                     textAlign: TextAlign.center,
                                     style: isSmall
                                         ? Theme.of(context).textTheme.headline4
@@ -281,10 +280,10 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-Map<String, VaccinationProgress> _cached;
+Map<String, VaccinationProgress> vaccineData;
 Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
-  if (_cached != null) {
-    return _cached;
+  if (vaccineData != null) {
+    return vaccineData;
   }
   final response = await http.get(
       'https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita');
@@ -317,7 +316,7 @@ Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
       output[vp.name] = vp;
     }
   });
-  _cached = output;
+  vaccineData = output;
 
   return output;
 }
@@ -335,3 +334,8 @@ class VaccinationProgress {
 
 const footerNote =
     """Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) • Number of doses per 100 people, divided by 2 • Source code available at [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021/blob/main/lib/main.dart) • Made with 💙 from Home, Berlin. • Copyright (c) 2021 Łukasz Wiśniewski""";
+
+extension DoublePretty on double {
+  /// formats 0.1234 to "0.12"
+  String toStringPretty() => NumberFormat("0.0#", "en_US").format(this);
+}

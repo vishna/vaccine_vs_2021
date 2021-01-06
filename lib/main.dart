@@ -11,7 +11,6 @@ import 'package:voyager/voyager.dart';
 final paths = loadPathsFromYamlSync('''
 '/:country':
   type: home
-  country: '%{country}'
   widget: HomeWidget
 ''');
 
@@ -134,7 +133,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _selectedCountryKey = context.voyager["country"];
+    _selectedCountryKey = context.voyager.pathParams["country"];
     if (vaccineData == null) {
       fetchVaccineData().then((value) {
         if (mounted) {

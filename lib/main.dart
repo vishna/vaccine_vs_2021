@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'dart:math';
 
+import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:http/http.dart' as http;
@@ -284,37 +284,31 @@ Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
   if (vaccineData != null) {
     return vaccineData;
   }
+
   final response = await http.get(
-      'https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita');
-  final dataStr = response.body.split("//EMBEDDED_JSON")[1];
+      'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/vaccinations/vaccinations.csv');
 
-  final dataJson = jsonDecode(dataStr);
+  List<List<dynamic>> vaccinations = const CsvToListConverter()
+      .convert(response.body, fieldDelimiter: ",", eol: "\n");
 
-  // fetch latest variableId and version
-  final variableId = dataJson["map"]["variableId"].toString();
-  final version = dataJson["version"].toString();
-
-  final responseVariables = await http.get(
-      "https://ourworldindata.org/grapher/data/variables/$variableId.json?v=$version");
-  final responseVariablesJson = jsonDecode(responseVariables.body);
-
-  // map entities to VaccinationProgress objects
-  final entities = responseVariablesJson["variables"][variableId]["entities"]
-      as List<dynamic>;
-  final values =
-      responseVariablesJson["variables"][variableId]["values"] as List<dynamic>;
-  final names = responseVariablesJson["entityKey"];
+  final indexOf = Map.fromIterable(vaccinations.first,
+      key: (v) => v, value: (v) => vaccinations.first.indexOf(v));
 
   final output = <String, VaccinationProgress>{};
-  var index = 0;
-  entities.forEach((entityKey) {
+  for (var index = 1; index < vaccinations.length; index++) {
+    final row = vaccinations[index];
+
     final vp = VaccinationProgress(
-        names[entityKey.toString()]["name"], values[index++]);
+        row[indexOf["location"]].toString().trim(),
+        double.tryParse(
+                row[indexOf["total_vaccinations_per_hundred"]].toString()) ??
+            0.0);
     final previousVp = output[vp.name];
     if (previousVp == null || vp.value > previousVp.value) {
       output[vp.name] = vp;
     }
-  });
+  }
+
   vaccineData = output;
 
   return output;

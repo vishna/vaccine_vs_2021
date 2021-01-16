@@ -6,6 +6,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
+import 'package:url_strategy/url_strategy.dart';
 import 'package:voyager/voyager.dart';
 
 final paths = loadPathsFromYamlSync('''
@@ -21,6 +22,7 @@ final plugins = [
 final appKey = GlobalKey<_VaccineVs2021AppState>();
 
 void main() async {
+  setPathUrlStrategy();
   runApp(VaccineVs2021App(
       key: appKey, router: VoyagerRouter.from(paths, plugins)));
 }

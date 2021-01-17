@@ -4,6 +4,7 @@ import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:http/http.dart' as http;
+import 'package:intervalprogressbar/intervalprogressbar.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:voyager/voyager.dart';
@@ -51,9 +52,7 @@ class _VaccineVs2021AppState extends State<VaccineVs2021App> {
         title: 'Vaccine vs 2021',
         routerDelegate: delegate,
         routeInformationParser: parser,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
+        theme: blackAndWhiteTheme(),
       ),
       onBackPressed: () {
         // ignore
@@ -207,18 +206,39 @@ class _HomePageState extends State<HomePage> {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Text(
+                                    "${vaccinationProgress.value.toDouble().toStringPretty()}%",
+                                    textAlign: TextAlign.center,
+                                    style: isSmall
+                                        ? Theme.of(context).textTheme.headline4
+                                        : Theme.of(context).textTheme.headline2,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16.0),
+                                    child: IntervalProgressBar(
+                                        direction: IntervalProgressDirection
+                                            .horizontal,
+                                        max: progressMax,
+                                        progress: (progressMax *
+                                                vaccinationProgress.value /
+                                                100)
+                                            .round(),
+                                        intervalSize: progressInterval,
+                                        size: progressSize(isSmall),
+                                        highlightColor: progressColor,
+                                        defaultColor: Colors.grey,
+                                        intervalColor: Colors.transparent,
+                                        intervalHighlightColor:
+                                            Colors.transparent,
+                                        reverse: !isSmall,
+                                        radius: progressRadius),
+                                  ),
+                                  Text(
                                     'Vaccination Progress',
                                     textAlign: TextAlign.center,
                                     style: isSmall
                                         ? null
                                         : Theme.of(context).textTheme.headline4,
-                                  ),
-                                  Text(
-                                    "${(vaccinationProgress.value / 2).toStringPretty()}%",
-                                    textAlign: TextAlign.center,
-                                    style: isSmall
-                                        ? Theme.of(context).textTheme.headline4
-                                        : Theme.of(context).textTheme.headline2,
                                   ),
                                 ],
                               ),
@@ -233,18 +253,39 @@ class _HomePageState extends State<HomePage> {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Text(
-                                    '2021 Progress',
-                                    textAlign: TextAlign.center,
-                                    style: isSmall
-                                        ? null
-                                        : Theme.of(context).textTheme.headline4,
-                                  ),
-                                  Text(
                                     "$yearProgress%",
                                     textAlign: TextAlign.center,
                                     style: isSmall
                                         ? Theme.of(context).textTheme.headline4
                                         : Theme.of(context).textTheme.headline2,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16.0),
+                                    child: IntervalProgressBar(
+                                        direction: IntervalProgressDirection
+                                            .horizontal,
+                                        max: progressMax,
+                                        progress: (double.parse(yearProgress) *
+                                                progressMax /
+                                                100.0)
+                                            .round(),
+                                        intervalSize: progressInterval,
+                                        size: progressSize(isSmall),
+                                        highlightColor: progressColor,
+                                        defaultColor: Colors.grey,
+                                        intervalColor: Colors.transparent,
+                                        intervalHighlightColor:
+                                            Colors.transparent,
+                                        reverse: false,
+                                        radius: progressRadius),
+                                  ),
+                                  Text(
+                                    '2021 Progress',
+                                    textAlign: TextAlign.center,
+                                    style: isSmall
+                                        ? null
+                                        : Theme.of(context).textTheme.headline4,
                                   ),
                                 ],
                               ),
@@ -326,9 +367,39 @@ class VaccinationProgress {
 }
 
 const footerNote =
-    """Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) • Number of doses per 100 people, divided by 2 • Source code available at [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021/blob/main/lib/main.dart) • Made with 💙 from Home, Berlin. • Copyright (c) 2021 Łukasz Wiśniewski""";
+    """Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) • Percent of people receiving at least 1 dose • Source code available at [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021/blob/main/lib/main.dart) • Made with 💙 from Home, Berlin. • Copyright (c) 2021 Łukasz Wiśniewski""";
 
 extension DoublePretty on double {
   /// formats 0.1234 to "0.12"
   String toStringPretty() => NumberFormat("0.0#", "en_US").format(this);
 }
+
+ThemeData blackAndWhiteTheme() => ThemeData(
+      primarySwatch: _pitchBlack,
+    );
+
+MaterialColor _pitchBlack = _monoColor(0xFF000000);
+
+MaterialColor _monoColor(int value) {
+  return MaterialColor(
+    value,
+    <int, Color>{
+      50: Color(value),
+      100: Color(value),
+      200: Color(value),
+      300: Color(value),
+      400: Color(value),
+      500: Color(value),
+      600: Color(value),
+      700: Color(value),
+      800: Color(value),
+      900: Color(value),
+    },
+  );
+}
+
+const progressColor = Colors.blue;
+const progressRadius = 2.0;
+const progressInterval = 1;
+const progressMax = 60;
+Size progressSize(bool isSmall) => isSmall ? Size(400, 4) : Size(400, 10);

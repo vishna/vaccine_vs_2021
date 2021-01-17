@@ -27,6 +27,7 @@ dependencies:
   url_launcher: ^5.7.10
   voyager: ^3.0.0-nullsafety.3
   intervalprogressbar: ^2.0.1
+  google_fonts: ^1.1.1
   csv: ^4.1.0
   flutter:
     sdk: flutter

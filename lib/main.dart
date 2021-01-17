@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:intervalprogressbar/intervalprogressbar.dart';
 import 'package:intl/intl.dart';
@@ -52,7 +53,7 @@ class _VaccineVs2021AppState extends State<VaccineVs2021App> {
         title: 'Vaccine vs 2021',
         routerDelegate: delegate,
         routeInformationParser: parser,
-        theme: blackAndWhiteTheme(),
+        theme: blackAndWhiteTheme(context),
       ),
       onBackPressed: () {
         // ignore
@@ -225,8 +226,8 @@ class _HomePageState extends State<HomePage> {
                                             .round(),
                                         intervalSize: progressInterval,
                                         size: progressSize(isSmall),
-                                        highlightColor: progressColor,
-                                        defaultColor: Colors.grey,
+                                        highlightColor: progressActiveColor,
+                                        defaultColor: progressBgColor(),
                                         intervalColor: Colors.transparent,
                                         intervalHighlightColor:
                                             Colors.transparent,
@@ -272,8 +273,8 @@ class _HomePageState extends State<HomePage> {
                                             .round(),
                                         intervalSize: progressInterval,
                                         size: progressSize(isSmall),
-                                        highlightColor: progressColor,
-                                        defaultColor: Colors.grey,
+                                        highlightColor: progressActiveColor,
+                                        defaultColor: progressBgColor(),
                                         intervalColor: Colors.transparent,
                                         intervalHighlightColor:
                                             Colors.transparent,
@@ -303,6 +304,12 @@ class _HomePageState extends State<HomePage> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             MarkdownBody(
+                              styleSheet: MarkdownStyleSheet.fromTheme(
+                                      Theme.of(context))
+                                  .copyWith(
+                                      a: const TextStyle(
+                                color: linkColor,
+                              )),
                               onTapLink: (text, href, title) {
                                 url_launcher.launch(href);
                               },
@@ -367,16 +374,19 @@ class VaccinationProgress {
 }
 
 const footerNote =
-    """Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) • Percent of people receiving at least 1 dose • Source code available at [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021/blob/main/lib/main.dart) • Made with 💙 from Home, Berlin. • Copyright (c) 2021 Łukasz Wiśniewski""";
+    """Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) • Percent of people receiving at least 1 dose • Source [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021) • Made with 💙 from Home by [Łukasz Wiśniewski](https://twitter.com/vishna)""";
 
 extension DoublePretty on double {
   /// formats 0.1234 to "0.12"
   String toStringPretty() => NumberFormat("0.0#", "en_US").format(this);
 }
 
-ThemeData blackAndWhiteTheme() => ThemeData(
-      primarySwatch: _pitchBlack,
-    );
+ThemeData blackAndWhiteTheme(BuildContext context) => ThemeData(
+    primarySwatch: _pitchBlack,
+    canvasColor: Colors.white,
+    textTheme: GoogleFonts.oswaldTextTheme(
+      Theme.of(context).textTheme,
+    ).apply(bodyColor: Colors.black, displayColor: Colors.black));
 
 MaterialColor _pitchBlack = _monoColor(0xFF000000);
 
@@ -398,8 +408,10 @@ MaterialColor _monoColor(int value) {
   );
 }
 
-const progressColor = Colors.blue;
+const linkColor = Colors.blueGrey;
+Color progressBgColor() => Colors.grey.withAlpha(170);
+const progressActiveColor = Colors.black;
 const progressRadius = 2.0;
 const progressInterval = 1;
-const progressMax = 60;
-Size progressSize(bool isSmall) => isSmall ? Size(400, 4) : Size(400, 10);
+const progressMax = 40;
+Size progressSize(bool isSmall) => isSmall ? Size(400, 8) : Size(400, 12);

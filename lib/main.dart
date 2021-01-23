@@ -349,7 +349,7 @@ Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
     final vp = VaccinationProgress(
         row[indexOf["location"]].toString().trim(),
         double.tryParse(
-                row[indexOf["total_vaccinations_per_hundred"]].toString()) ??
+                row[indexOf["people_vaccinated_per_hundred"]].toString()) ??
             0.0);
     final previousVp = output[vp.name];
     if (previousVp == null || vp.value > previousVp.value) {

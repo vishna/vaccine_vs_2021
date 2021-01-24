@@ -51,8 +51,7 @@ class _CountryWidgetState extends State<CountryWidget> {
     return items;
   }
 
-  double get yearProgress {
-    final now = DateTime.now();
+  double yearProgress(DateTime now) {
     final diff = now.difference(new DateTime(now.year, 1, 1, 0, 0));
     final diffInDays = diff.inDays + 1;
     return (diffInDays.toDouble() / 365.0);
@@ -73,6 +72,7 @@ class _CountryWidgetState extends State<CountryWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // workaround for failing to implement NoTransitionDelegate
     return Hero(
       tag: "hero_scaffold",
       child: Scaffold(
@@ -136,15 +136,35 @@ class _CountryWidgetState extends State<CountryWidget> {
                               reverse: !isSmall,
                               description: Row(
                                 mainAxisSize: MainAxisSize.max,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  Container(
+                                    width: progressSize(isSmall).height * 0.75,
+                                    height: progressSize(isSmall).height * 1.25,
+                                    color: linkColor,
+                                  ),
+                                  SizedBox(
+                                    width: 4.0,
+                                  ),
                                   Text(
-                                    " ■ Partial (${vaccinationProgress.peopleVaccinated}%)",
+                                    "Partial (${vaccinationProgress.peopleVaccinated}%)",
                                     textAlign: TextAlign.center,
                                     style: TextStyle(color: linkColor),
                                   ),
+                                  SizedBox(
+                                    width: 8.0,
+                                  ),
+                                  Container(
+                                    width: progressSize(isSmall).height * 0.75,
+                                    height: progressSize(isSmall).height * 1.25,
+                                    color: progressActiveColor,
+                                  ),
+                                  SizedBox(
+                                    width: 4.0,
+                                  ),
                                   Text(
-                                    " ■ Full (${vaccinationProgress.peopleFullyVaccinated}%)",
+                                    "Full (${vaccinationProgress.peopleFullyVaccinated}%)",
                                     textAlign: TextAlign.center,
                                   ),
                                 ],
@@ -155,8 +175,14 @@ class _CountryWidgetState extends State<CountryWidget> {
                             width: contentWidth,
                             child: _ProgressInfoWidget(
                               title: '2021 Progress',
-                              progress: yearProgress,
+                              progress: yearProgress(vaccinationProgress.date),
                               isSmall: isSmall,
+                              description: Text(
+                                DateFormat("MMMM d")
+                                    .format(vaccinationProgress.date),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: linkColor),
+                              ),
                             ),
                           ),
                         ],

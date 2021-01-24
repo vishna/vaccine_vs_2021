@@ -32,23 +32,14 @@ class Repo {
     List<List<dynamic>> vaccinations = const CsvToListConverter()
         .convert(response.body, fieldDelimiter: ",", eol: "\n");
 
-    final indexOf = Map.fromIterable(vaccinations.first,
+    final indexOf = Map<String, int>.fromIterable(vaccinations.first,
         key: (v) => v, value: (v) => vaccinations.first.indexOf(v));
 
     final output = <String, VaccinationProgress>{};
     for (var index = 1; index < vaccinations.length; index++) {
       final row = vaccinations[index];
 
-      final vp = VaccinationProgress(
-          name: row[indexOf["location"]].toString().trim(),
-          isoCode: row[indexOf["iso_code"]].toString().trim(),
-          peopleFullyVaccinated: double.tryParse(
-                  row[indexOf["people_fully_vaccinated_per_hundred"]]
-                      .toString()) ??
-              0.0,
-          peopleVaccinated: double.tryParse(
-                  row[indexOf["people_vaccinated_per_hundred"]].toString()) ??
-              0.0);
+      final vp = VaccinationProgress.fromCsv(row, indexOf);
       final previousVp = output[vp.name];
       if (previousVp == null ||
           vp.peopleVaccinated > previousVp.peopleVaccinated) {

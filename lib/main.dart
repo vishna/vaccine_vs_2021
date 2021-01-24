@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import 'package:intervalprogressbar/intervalprogressbar.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
+import 'package:vaccine_vs_2021/widget/ambient_bar.dart';
 import 'package:voyager/voyager.dart';
 
 final paths = loadPathsFromYamlSync('''
@@ -123,11 +123,11 @@ class _HomePageState extends State<HomePage> {
     return items;
   }
 
-  String get yearProgress {
+  double get yearProgress {
     final now = DateTime.now();
     final diff = now.difference(new DateTime(now.year, 1, 1, 0, 0));
     final diffInDays = diff.inDays + 1;
-    return ((diffInDays.toDouble() / 365.0) * 100.0).toStringPretty();
+    return (diffInDays.toDouble() / 365.0);
   }
 
   @override
@@ -200,96 +200,20 @@ class _HomePageState extends State<HomePage> {
                         children: <Widget>[
                           SizedBox(
                             width: contentWidth,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "${vaccinationProgress.value.toDouble().toStringPretty()}%",
-                                    textAlign: TextAlign.center,
-                                    style: isSmall
-                                        ? Theme.of(context).textTheme.headline4
-                                        : Theme.of(context).textTheme.headline2,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16.0),
-                                    child: IntervalProgressBar(
-                                        direction: IntervalProgressDirection
-                                            .horizontal,
-                                        max: progressMax,
-                                        progress: (progressMax *
-                                                vaccinationProgress.value /
-                                                100)
-                                            .round(),
-                                        intervalSize: progressInterval,
-                                        size: progressSize(isSmall),
-                                        highlightColor: progressActiveColor,
-                                        defaultColor: progressBgColor(),
-                                        intervalColor: Colors.transparent,
-                                        intervalHighlightColor:
-                                            Colors.transparent,
-                                        reverse: !isSmall,
-                                        radius: progressRadius),
-                                  ),
-                                  Text(
-                                    'Vaccination Progress',
-                                    textAlign: TextAlign.center,
-                                    style: isSmall
-                                        ? null
-                                        : Theme.of(context).textTheme.headline4,
-                                  ),
-                                ],
-                              ),
+                            child: _ProgressInfoWidget(
+                              title: 'Vaccination Progress',
+                              progress:
+                                  vaccinationProgress.value.toDouble() / 100.0,
+                              isSmall: isSmall,
+                              reverse: true,
                             ),
                           ),
                           SizedBox(
                             width: contentWidth,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "$yearProgress%",
-                                    textAlign: TextAlign.center,
-                                    style: isSmall
-                                        ? Theme.of(context).textTheme.headline4
-                                        : Theme.of(context).textTheme.headline2,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16.0),
-                                    child: IntervalProgressBar(
-                                        direction: IntervalProgressDirection
-                                            .horizontal,
-                                        max: progressMax,
-                                        progress: (double.parse(yearProgress) *
-                                                progressMax /
-                                                100.0)
-                                            .round(),
-                                        intervalSize: progressInterval,
-                                        size: progressSize(isSmall),
-                                        highlightColor: progressActiveColor,
-                                        defaultColor: progressBgColor(),
-                                        intervalColor: Colors.transparent,
-                                        intervalHighlightColor:
-                                            Colors.transparent,
-                                        reverse: false,
-                                        radius: progressRadius),
-                                  ),
-                                  Text(
-                                    '2021 Progress',
-                                    textAlign: TextAlign.center,
-                                    style: isSmall
-                                        ? null
-                                        : Theme.of(context).textTheme.headline4,
-                                  ),
-                                ],
-                              ),
+                            child: _ProgressInfoWidget(
+                              title: '2021 Progress',
+                              progress: yearProgress,
+                              isSmall: isSmall,
                             ),
                           ),
                         ],
@@ -370,6 +294,61 @@ class VaccinationProgress {
   @override
   String toString() {
     return "$runtimeType[$name:$value]";
+  }
+}
+
+class _ProgressInfoWidget extends StatelessWidget {
+  const _ProgressInfoWidget({
+    Key key,
+    this.progress,
+    this.title,
+    this.reverse = false,
+    @required this.isSmall,
+  }) : super(key: key);
+  final double progress;
+  final String title;
+  final bool reverse;
+  final bool isSmall;
+
+  @override
+  Widget build(BuildContext context) {
+    final progressPretty = (progress * 100).toStringPretty();
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            "$progressPretty%",
+            textAlign: TextAlign.center,
+            style: isSmall
+                ? Theme.of(context).textTheme.headline4
+                : Theme.of(context).textTheme.headline2,
+          ),
+          Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: SizedBox.fromSize(
+                size: progressSize(isSmall),
+                child: AmbientBar(
+                  value: AmbientBarValue(
+                      reverse: reverse,
+                      radius: progressRadius,
+                      backgroundColor: progressBgColor(),
+                      progressColor: progressActiveColor,
+                      progress: progress,
+                      gapSize: progressInterval.toDouble(),
+                      stepCount: progressMax),
+                ),
+              )),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: isSmall ? null : Theme.of(context).textTheme.headline4,
+          ),
+        ],
+      ),
+    );
   }
 }
 

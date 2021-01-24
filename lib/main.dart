@@ -201,18 +201,41 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     LayoutBuilder(builder: (context, constraints) {
-                      final contentWidth = max(constraints.maxWidth / 2, 200.0);
-                      final isSmall = constraints.maxWidth / 2 < 200.0;
+                      final contentWidth =
+                          max(constraints.maxWidth / 2, contentWidthBreak);
+                      final isSmall =
+                          constraints.maxWidth / 2 < contentWidthBreak;
                       return Wrap(
                         children: <Widget>[
                           SizedBox(
                             width: contentWidth,
                             child: _ProgressInfoWidget(
                               title: 'Vaccination Progress',
-                              progress:
-                                  vaccinationProgress.value.toDouble() / 100.0,
+                              progress: vaccinationProgress
+                                      .peopleFullyVaccinated
+                                      .toDouble() /
+                                  100.0,
+                              frontProgress: vaccinationProgress
+                                      .peopleVaccinated
+                                      .toDouble() /
+                                  100.0,
                               isSmall: isSmall,
                               reverse: !isSmall,
+                              description: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    " ■ Partial (${vaccinationProgress.peopleVaccinated}%)",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: linkColor),
+                                  ),
+                                  Text(
+                                    " ■ Full (${vaccinationProgress.peopleFullyVaccinated}%)",
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           SizedBox(
@@ -293,11 +316,16 @@ Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
     final vp = VaccinationProgress(
         name: row[indexOf["location"]].toString().trim(),
         isoCode: row[indexOf["iso_code"]].toString().trim(),
-        value: double.tryParse(
+        peopleFullyVaccinated: double.tryParse(
+                row[indexOf["people_fully_vaccinated_per_hundred"]]
+                    .toString()) ??
+            0.0,
+        peopleVaccinated: double.tryParse(
                 row[indexOf["people_vaccinated_per_hundred"]].toString()) ??
             0.0);
     final previousVp = output[vp.name];
-    if (previousVp == null || vp.value > previousVp.value) {
+    if (previousVp == null ||
+        vp.peopleVaccinated > previousVp.peopleVaccinated) {
       output[vp.name] = vp;
     }
   }
@@ -319,33 +347,38 @@ Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
 }
 
 class VaccinationProgress {
-  const VaccinationProgress({this.name, this.isoCode, this.value});
+  const VaccinationProgress({
+    this.name,
+    this.isoCode,
+    this.peopleVaccinated,
+    this.peopleFullyVaccinated,
+  });
   final String name;
   final String isoCode;
-  final num value;
-
-  @override
-  String toString() {
-    return "$runtimeType[$name:$value]";
-  }
+  final num peopleVaccinated;
+  final num peopleFullyVaccinated;
 }
 
 class _ProgressInfoWidget extends StatelessWidget {
   const _ProgressInfoWidget({
     Key key,
     this.progress,
+    this.frontProgress,
     this.title,
     this.reverse = false,
     @required this.isSmall,
+    this.description,
   }) : super(key: key);
   final double progress;
+  final double frontProgress;
   final String title;
   final bool reverse;
   final bool isSmall;
+  final Widget description;
 
   @override
   Widget build(BuildContext context) {
-    final progressPretty = (progress * 100).toStringPretty();
+    final progressPretty = ((frontProgress ?? progress) * 100).toStringPretty();
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -363,15 +396,37 @@ class _ProgressInfoWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16.0),
               child: SizedBox.fromSize(
                 size: progressSize(isSmall),
-                child: AmbientBar(
-                  value: AmbientBarValue(
-                      reverse: reverse,
-                      radius: progressRadius,
-                      backgroundColor: progressBgColor(),
-                      progressColor: progressActiveColor,
-                      progress: progress,
-                      gapSize: progressInterval.toDouble(),
-                      stepCount: progressMax),
+                child: Stack(
+                  children: [
+                    if (frontProgress != null)
+                      Positioned.fill(
+                        child: AmbientBar(
+                          value: AmbientBarValue(
+                              reverse: reverse,
+                              radius: progressRadius,
+                              backgroundColor: progressBgColor(),
+                              progressColor: linkColor,
+                              progress: frontProgress,
+                              gapSize: progressInterval,
+                              stepCount: progressMax),
+                        ),
+                      ),
+                    if (progress != null)
+                      Positioned.fill(
+                        child: AmbientBar(
+                          value: AmbientBarValue(
+                              reverse: reverse,
+                              radius: progressRadius,
+                              backgroundColor: frontProgress != null
+                                  ? Colors.transparent
+                                  : progressBgColor(),
+                              progressColor: progressActiveColor,
+                              progress: progress,
+                              gapSize: progressInterval,
+                              stepCount: progressMax),
+                        ),
+                      ),
+                  ],
                 ),
               )),
           Text(
@@ -379,6 +434,7 @@ class _ProgressInfoWidget extends StatelessWidget {
             textAlign: TextAlign.center,
             style: isSmall ? null : Theme.of(context).textTheme.headline4,
           ),
+          if (description != null) description,
         ],
       ),
     );
@@ -386,7 +442,7 @@ class _ProgressInfoWidget extends StatelessWidget {
 }
 
 const footerNote =
-    """Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) • Percent of people receiving at least 1 dose • Source [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021) • Made with 💙 from Home by [Łukasz Wiśniewski](https://twitter.com/vishna)""";
+    """Based on data from [ourworldindata.org](https://ourworldindata.org/grapher/covid-vaccination-doses-per-capita) • Source [github.com/vishna/vaccine_vs_2021](https://github.com/vishna/vaccine_vs_2021) • Made with 💙 from Home by [Łukasz Wiśniewski](https://twitter.com/vishna)""";
 
 extension DoublePretty on double {
   /// formats 0.1234 to "0.12"
@@ -424,6 +480,7 @@ const linkColor = Colors.blueGrey;
 Color progressBgColor() => Colors.grey.withAlpha(170);
 const progressActiveColor = Colors.black;
 const progressRadius = 2.0;
-const progressInterval = 1;
+const progressInterval = 1.0;
 const progressMax = 40;
+const contentWidthBreak = 256.0;
 Size progressSize(bool isSmall) => isSmall ? Size(400, 8) : Size(400, 12);

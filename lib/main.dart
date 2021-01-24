@@ -208,7 +208,7 @@ class _HomePageState extends State<HomePage> {
                               progress:
                                   vaccinationProgress.value.toDouble() / 100.0,
                               isSmall: isSmall,
-                              reverse: true,
+                              reverse: !isSmall,
                             ),
                           ),
                           SizedBox(
@@ -257,9 +257,9 @@ class _HomePageState extends State<HomePage> {
 String _locationIsoCode;
 Future<void> _resolveLocation() async {
   try {
-    final response = await http.get('http://ip-api.com/json');
+    final response = await http.get('https://api.ipregistry.co?key=tryout');
     final value = jsonDecode(response.body);
-    String code2 = value["countryCode"];
+    String code2 = value["location"]["country"]["code"];
     final cc = CountryCode.tryParse(code2);
     _locationIsoCode = cc.alpha3;
   } catch (_) {}

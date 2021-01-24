@@ -12,6 +12,10 @@ import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:vaccine_vs_2021/widget/ambient_bar.dart';
 import 'package:voyager/voyager.dart';
 
+const initialStack = VoyagerStack(
+  [VoyagerPage("/world")],
+);
+
 final paths = loadPathsFromYamlSync('''
 '/:country':
   type: home
@@ -47,7 +51,7 @@ class VaccineVs2021App extends StatefulWidget {
 }
 
 class _VaccineVs2021AppState extends State<VaccineVs2021App> {
-  var stack = VoyagerStack([VoyagerPage("/world")]);
+  var stack = initialStack;
 
   void updateStack(VoyagerStack value) {
     setState(() {
@@ -306,7 +310,7 @@ Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
       orElse: () => null,
     );
 
-    if (preselectedEntry != null) {
+    if (preselectedEntry != null && appKey.currentState.stack == initialStack) {
       selectCountry(preselectedEntry.name);
     }
   }

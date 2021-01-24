@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:math';
 
+import 'package:country_code/country_code.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -21,6 +23,15 @@ final plugins = [
 ];
 
 final appKey = GlobalKey<_VaccineVs2021AppState>();
+
+void selectCountry(String name) {
+  final newPath = "/$name".toLowerCase().replaceAll(" ", "_");
+  appKey.currentState.updateStack(VoyagerStack(
+    [
+      VoyagerPage(newPath),
+    ],
+  ));
+}
 
 void main() async {
   runApp(VaccineVs2021App(
@@ -157,15 +168,7 @@ class _HomePageState extends State<HomePage> {
                 child: Center(child: Text("Pick Country")),
               ),
               onSelected: (String newValue) {
-                setState(() {
-                  final newPath =
-                      "/$newValue".toLowerCase().replaceAll(" ", "_");
-                  appKey.currentState.updateStack(VoyagerStack(
-                    [
-                      VoyagerPage(newPath),
-                    ],
-                  ));
-                });
+                selectCountry(newValue);
               },
               itemBuilder: (BuildContext context) {
                 return countries.map((String choice) {
@@ -251,11 +254,24 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+String _locationIsoCode;
+Future<void> _resolveLocation() async {
+  try {
+    final response = await http.get('http://ip-api.com/json');
+    final value = jsonDecode(response.body);
+    String code2 = value["countryCode"];
+    final cc = CountryCode.tryParse(code2);
+    _locationIsoCode = cc.alpha3;
+  } catch (_) {}
+}
+
 Map<String, VaccinationProgress> vaccineData;
 Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
   if (vaccineData != null) {
     return vaccineData;
   }
+
+  await _resolveLocation();
 
   final response = await http.get(
       'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/vaccinations/vaccinations.csv');
@@ -271,8 +287,9 @@ Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
     final row = vaccinations[index];
 
     final vp = VaccinationProgress(
-        row[indexOf["location"]].toString().trim(),
-        double.tryParse(
+        name: row[indexOf["location"]].toString().trim(),
+        isoCode: row[indexOf["iso_code"]].toString().trim(),
+        value: double.tryParse(
                 row[indexOf["people_vaccinated_per_hundred"]].toString()) ??
             0.0);
     final previousVp = output[vp.name];
@@ -283,12 +300,24 @@ Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
 
   vaccineData = output;
 
+  if (_locationIsoCode != null) {
+    final preselectedEntry = output.values.firstWhere(
+      (element) => element.isoCode == _locationIsoCode,
+      orElse: () => null,
+    );
+
+    if (preselectedEntry != null) {
+      selectCountry(preselectedEntry.name);
+    }
+  }
+
   return output;
 }
 
 class VaccinationProgress {
-  const VaccinationProgress(this.name, this.value);
+  const VaccinationProgress({this.name, this.isoCode, this.value});
   final String name;
+  final String isoCode;
   final num value;
 
   @override

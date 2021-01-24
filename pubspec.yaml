@@ -28,6 +28,7 @@ dependencies:
   voyager: ^3.0.0-nullsafety.3
   google_fonts: ^1.1.1
   csv: ^4.1.0
+  country_code: ^0.1.1
   flutter:
     sdk: flutter
 

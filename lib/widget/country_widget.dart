@@ -140,40 +140,9 @@ class _CountryWidgetState extends State<CountryWidget> {
                                   100.0,
                               isSmall: isSmall,
                               reverse: !isSmall,
-                              description: Row(
-                                mainAxisSize: MainAxisSize.max,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: progressSize(isSmall).height * 0.75,
-                                    height: progressSize(isSmall).height * 1.25,
-                                    color: linkColor,
-                                  ),
-                                  SizedBox(
-                                    width: 4.0,
-                                  ),
-                                  Text(
-                                    "Partial (${vaccinationProgress.peopleVaccinated}%)",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(color: linkColor),
-                                  ),
-                                  SizedBox(
-                                    width: 8.0,
-                                  ),
-                                  Container(
-                                    width: progressSize(isSmall).height * 0.75,
-                                    height: progressSize(isSmall).height * 1.25,
-                                    color: progressActiveColor,
-                                  ),
-                                  SizedBox(
-                                    width: 4.0,
-                                  ),
-                                  Text(
-                                    "Full (${vaccinationProgress.peopleFullyVaccinated}%)",
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
+                              description: _VaccinationDescription(
+                                isSmall: isSmall,
+                                vaccinationProgress: vaccinationProgress,
                               ),
                             ),
                           ),
@@ -183,51 +152,116 @@ class _CountryWidgetState extends State<CountryWidget> {
                               title: '2021 Progress',
                               progress: yearProgress(vaccinationProgress.date),
                               isSmall: isSmall,
-                              description: InkWell(
+                              description: _YearDescription(
                                 onTap: () {
                                   setState(() {
                                     _daysBack++;
                                   });
                                 },
-                                child: Text(
-                                  DateFormat("MMMM d")
-                                      .format(vaccinationProgress.date),
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: linkColor),
-                                ),
+                                date: vaccinationProgress.date,
                               ),
                             ),
                           ),
                         ],
                       );
                     }),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            MarkdownBody(
-                              styleSheet: MarkdownStyleSheet.fromTheme(
-                                      Theme.of(context))
-                                  .copyWith(
-                                      a: const TextStyle(
-                                color: linkColor,
-                              )),
-                              onTapLink: (text, href, title) {
-                                url_launcher.launch(href);
-                              },
-                              data: footerNote,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    _Footer(),
                   ],
                 ),
               ),
+      ),
+    );
+  }
+}
+
+class _VaccinationDescription extends StatelessWidget {
+  const _VaccinationDescription(
+      {Key key, this.vaccinationProgress, this.isSmall})
+      : super(key: key);
+  final VaccinationProgress vaccinationProgress;
+  final bool isSmall;
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: progressSize(isSmall).height * 0.75,
+          height: progressSize(isSmall).height * 1.25,
+          color: linkColor,
+        ),
+        SizedBox(
+          width: 4.0,
+        ),
+        Text(
+          "Partial (${vaccinationProgress.peopleVaccinated}%)",
+          textAlign: TextAlign.center,
+          style: TextStyle(color: linkColor),
+        ),
+        SizedBox(
+          width: 8.0,
+        ),
+        Container(
+          width: progressSize(isSmall).height * 0.75,
+          height: progressSize(isSmall).height * 1.25,
+          color: progressActiveColor,
+        ),
+        SizedBox(
+          width: 4.0,
+        ),
+        Text(
+          "Full (${vaccinationProgress.peopleFullyVaccinated}%)",
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+class _YearDescription extends StatelessWidget {
+  const _YearDescription({Key key, this.onTap, this.date}) : super(key: key);
+  final VoidCallback onTap;
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Text(
+        DateFormat("MMMM d").format(date),
+        textAlign: TextAlign.center,
+        style: TextStyle(color: linkColor),
+      ),
+    );
+  }
+}
+
+class _Footer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            MarkdownBody(
+              styleSheet:
+                  MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                      a: const TextStyle(
+                color: linkColor,
+              )),
+              onTapLink: (text, href, title) {
+                url_launcher.launch(href);
+              },
+              data: footerNote,
+            ),
+          ],
+        ),
       ),
     );
   }

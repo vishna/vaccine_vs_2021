@@ -18,8 +18,9 @@ class Repo {
     } catch (_) {}
   }
 
-  static Map<String, VaccinationProgress> vaccineData;
-  static Future<Map<String, VaccinationProgress>> fetchVaccineData() async {
+  static Map<String, List<VaccinationProgress>> vaccineData;
+  static Future<Map<String, List<VaccinationProgress>>>
+      fetchVaccineData() async {
     if (vaccineData != null) {
       return vaccineData;
     }
@@ -35,28 +36,30 @@ class Repo {
     final indexOf = Map<String, int>.fromIterable(vaccinations.first,
         key: (v) => v, value: (v) => vaccinations.first.indexOf(v));
 
-    final output = <String, VaccinationProgress>{};
+    final output = <String, List<VaccinationProgress>>{};
     for (var index = 1; index < vaccinations.length; index++) {
       final row = vaccinations[index];
 
       final vp = VaccinationProgress.fromCsv(row, indexOf);
-      final previousVp = output[vp.name];
-      if (previousVp == null ||
-          vp.peopleVaccinated > previousVp.peopleVaccinated) {
-        output[vp.name] = vp;
+      if (vp == null) {
+        continue;
       }
+      final vpArray = output[vp.name] ?? [];
+      vpArray.add(vp);
+      vpArray.sort((a, b) => a.date.compareTo(b.date));
+      output[vp.name] = vpArray;
     }
 
     vaccineData = output;
 
     if (_locationIsoCode != null) {
       final preselectedEntry = output.values.firstWhere(
-        (element) => element.isoCode == _locationIsoCode,
+        (element) => element.first.isoCode == _locationIsoCode,
         orElse: () => null,
       );
 
       if (preselectedEntry != null && Vaxx2021App.stack == initialStack) {
-        Vaxx2021App.selectCountry(preselectedEntry.name);
+        Vaxx2021App.selectCountry(preselectedEntry.first.name);
       }
     }
 

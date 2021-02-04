@@ -22,6 +22,9 @@ class _CountryWidgetState extends State<CountryWidget> {
   /// whatever the param is in the url
   String _selectedCountryKey = "world";
 
+  /// days back counting from the most recent
+  int _daysBack = 0;
+
   /// maps the param to entry from json
   String get selectedCountry {
     final c = countries;
@@ -40,7 +43,10 @@ class _CountryWidgetState extends State<CountryWidget> {
       return null;
     }
 
-    return Repo.vaccineData[selectedCountry];
+    final array = Repo.vaccineData[selectedCountry];
+    final n = array.length;
+
+    return array[(n - 1 - _daysBack) % n];
   }
 
   List<String> get countries {
@@ -177,11 +183,18 @@ class _CountryWidgetState extends State<CountryWidget> {
                               title: '2021 Progress',
                               progress: yearProgress(vaccinationProgress.date),
                               isSmall: isSmall,
-                              description: Text(
-                                DateFormat("MMMM d")
-                                    .format(vaccinationProgress.date),
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: linkColor),
+                              description: InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _daysBack++;
+                                  });
+                                },
+                                child: Text(
+                                  DateFormat("MMMM d")
+                                      .format(vaccinationProgress.date),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: linkColor),
+                                ),
                               ),
                             ),
                           ),

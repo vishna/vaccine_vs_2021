@@ -10,17 +10,22 @@ class VaccinationProgress extends Equatable {
 
   factory VaccinationProgress.fromCsv(
       List<dynamic> row, Map<String, int> indexOf) {
+    final date = DateTime.parse(row[indexOf["date"]]);
+    final name = row[indexOf["location"]].toString().trim();
+    final isoCode = row[indexOf["iso_code"]].toString().trim();
+    final peopleFullyVaccinated = double.tryParse(
+        row[indexOf["people_fully_vaccinated_per_hundred"]].toString());
+    final peopleVaccinated = double.tryParse(
+        row[indexOf["people_vaccinated_per_hundred"]].toString());
+    if (peopleVaccinated == null || peopleFullyVaccinated == null) {
+      return null;
+    }
     return VaccinationProgress(
-        date: DateTime.parse(row[indexOf["date"]]),
-        name: row[indexOf["location"]].toString().trim(),
-        isoCode: row[indexOf["iso_code"]].toString().trim(),
-        peopleFullyVaccinated: double.tryParse(
-                row[indexOf["people_fully_vaccinated_per_hundred"]]
-                    .toString()) ??
-            0.0,
-        peopleVaccinated: double.tryParse(
-                row[indexOf["people_vaccinated_per_hundred"]].toString()) ??
-            0.0);
+        date: date,
+        name: name,
+        isoCode: isoCode,
+        peopleFullyVaccinated: peopleFullyVaccinated,
+        peopleVaccinated: peopleVaccinated);
   }
 
   final String name;

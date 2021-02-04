@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:vaccine_vs_2021/theme.dart';
-import 'package:vaccine_vs_2021/widget/ambient_bar.dart';
 import 'package:vaccine_vs_2021/widget/country_widget.dart';
 import 'package:voyager/voyager.dart';
 

@@ -17,7 +17,6 @@ const initialStack = VoyagerStack(
 /// Voyager's navigation map
 final paths = loadPathsFromYamlSync('''
 '/:country':
-  type: home
   widget: CountryWidget
 ''');
 

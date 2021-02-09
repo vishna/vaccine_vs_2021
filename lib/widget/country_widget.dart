@@ -44,6 +44,9 @@ class _CountryWidgetState extends State<CountryWidget> {
     _scrollTo(query);
   }
 
+  /// HACK: flag we use to give minimum scroll duration on the first run
+  var _initialScroll = true;
+
   /// scrollsToQuery
   void _scrollTo(String query) {
     final index = countries.indexWhere(
@@ -52,7 +55,11 @@ class _CountryWidgetState extends State<CountryWidget> {
       return;
     }
     _carouselController.animateToCenterIndex(index,
-        duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
+        duration: _initialScroll
+            ? Duration(milliseconds: 1)
+            : Duration(milliseconds: 300),
+        curve: Curves.easeInOut);
+    _initialScroll = false;
   }
 
   /// maps the param to entry from json
@@ -145,6 +152,12 @@ class _CountryWidgetState extends State<CountryWidget> {
                                 controller: _textController,
                                 onChanged: (_) {
                                   setState(_runQuery);
+                                },
+                                onSubmitted: (_) {
+                                  final countryIndex =
+                                      _carouselController.centerIndex.round();
+                                  Vaxx2021App.selectCountry(
+                                      countries[countryIndex]);
                                 },
                                 autofocus: false,
                                 style: Theme.of(context).textTheme.headline2,

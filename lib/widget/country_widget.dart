@@ -9,6 +9,7 @@ import 'package:vaccine_vs_2021/model/vaccination_progress.dart';
 import 'package:vaccine_vs_2021/repo.dart';
 import 'package:vaccine_vs_2021/theme.dart';
 import 'package:vaccine_vs_2021/widget/ambient_bar.dart';
+import 'package:vaccine_vs_2021/widget/carousel.dart';
 import 'package:voyager/voyager.dart';
 
 class CountryWidget extends StatefulWidget {
@@ -28,15 +29,30 @@ class _CountryWidgetState extends State<CountryWidget> {
   /// quick country lookup text controller
   TextEditingController _textController;
 
+  /// carousel controller
+  CarouselController _carouselController;
+
   /// whether or not text input is in focus
   bool _hasFocus = false;
 
-  /// contries lookup
-  var _countriesQuery = <String>[];
-
   /// updates UI with the list of query matching countries
   void _runQuery() {
-    _countriesQuery = Repo.lookupCountry(_textController.text);
+    var query = _textController.text;
+    if (query == null || query.isEmpty || query.trim().isEmpty) {
+      query = selectedCountry;
+    }
+    _scrollTo(query);
+  }
+
+  /// scrollsToQuery
+  void _scrollTo(String query) {
+    final index = countries.indexWhere(
+        (element) => element.toLowerCase().startsWith(query.toLowerCase()));
+    if (index == -1) {
+      return;
+    }
+    _carouselController.animateToCenterIndex(index,
+        duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
   }
 
   /// maps the param to entry from json
@@ -82,16 +98,13 @@ class _CountryWidgetState extends State<CountryWidget> {
     super.initState();
     _selectedCountryKey = context.voyager.pathParams["country"];
     _textController = TextEditingController();
+    _carouselController = CarouselController();
     if (Repo.vaccineData == null) {
       Repo.fetchVaccineData().then((value) {
         if (mounted) {
-          setState(() {
-            _runQuery();
-          });
+          setState(() {});
         }
       });
-    } else {
-      _runQuery();
     }
   }
 
@@ -123,6 +136,9 @@ class _CountryWidgetState extends State<CountryWidget> {
                               onFocusChange: (hasFocus) {
                                 setState(() {
                                   _hasFocus = hasFocus;
+                                  if (hasFocus) {
+                                    _runQuery();
+                                  }
                                 });
                               },
                               child: TextField(
@@ -144,20 +160,20 @@ class _CountryWidgetState extends State<CountryWidget> {
                               duration: Duration(milliseconds: 300),
                               child: SizedBox(
                                 height: countryPickerHeight,
-                                child: ListView.builder(
-                                    itemCount: _countriesQuery.length,
-                                    scrollDirection: Axis.horizontal,
+                                child: Carousel(
+                                    controller: _carouselController,
+                                    itemCount: countries.length,
                                     itemBuilder: (context, index) {
                                       return InkWell(
                                         onTap: _hasFocus
                                             ? () => Vaxx2021App.selectCountry(
-                                                _countriesQuery[index])
+                                                countries[index])
                                             : null,
                                         child: Center(
                                           child: Padding(
                                             padding: const EdgeInsets.all(
                                                 countryPickerPadding),
-                                            child: Text(_countriesQuery[index]),
+                                            child: Text(countries[index]),
                                           ),
                                         ),
                                       );

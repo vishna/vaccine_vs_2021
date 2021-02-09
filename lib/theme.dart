@@ -35,4 +35,6 @@ const progressRadius = 2.0;
 const progressInterval = 1.0;
 const progressMax = 40;
 const contentWidthBreak = 256.0;
+const countryPickerHeight = 56.0;
+const countryPickerPadding = 16.0;
 Size progressSize(bool isSmall) => isSmall ? Size(400, 8) : Size(400, 12);

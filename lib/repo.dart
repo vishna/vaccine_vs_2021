@@ -65,4 +65,16 @@ class Repo {
 
     return output;
   }
+
+  static List<String> lookupCountry(String query) {
+    final allCountries = List<String>.from(vaccineData.keys)
+      ..sort((a, b) => a.compareTo(b));
+    if (query == null || query.isEmpty) {
+      return allCountries;
+    }
+
+    return allCountries
+        .where((element) => element.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+  }
 }

@@ -25,6 +25,20 @@ class _CountryWidgetState extends State<CountryWidget> {
   /// days back counting from the most recent
   int _daysBack = 0;
 
+  /// quick country lookup text controller
+  TextEditingController _textController;
+
+  /// whether or not text input is in focus
+  bool _hasFocus = false;
+
+  /// contries lookup
+  var _countriesQuery = <String>[];
+
+  /// updates UI with the list of query matching countries
+  void _runQuery() {
+    _countriesQuery = Repo.lookupCountry(_textController.text);
+  }
+
   /// maps the param to entry from json
   String get selectedCountry {
     final c = countries;
@@ -67,13 +81,24 @@ class _CountryWidgetState extends State<CountryWidget> {
   void initState() {
     super.initState();
     _selectedCountryKey = context.voyager.pathParams["country"];
+    _textController = TextEditingController();
     if (Repo.vaccineData == null) {
       Repo.fetchVaccineData().then((value) {
         if (mounted) {
-          setState(() {});
+          setState(() {
+            _runQuery();
+          });
         }
       });
+    } else {
+      _runQuery();
     }
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
   }
 
   @override
@@ -82,28 +107,6 @@ class _CountryWidgetState extends State<CountryWidget> {
     return Hero(
       tag: "hero_scaffold",
       child: Scaffold(
-        appBar: AppBar(
-          title: Text("Vaccine vs 2021"),
-          actions: [
-            PopupMenuButton<String>(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Center(child: Text("Pick Country")),
-              ),
-              onSelected: (String newValue) {
-                Vaxx2021App.selectCountry(newValue);
-              },
-              itemBuilder: (BuildContext context) {
-                return countries.map((String choice) {
-                  return PopupMenuItem<String>(
-                    value: choice,
-                    child: Text(choice),
-                  );
-                }).toList();
-              },
-            ),
-          ],
-        ),
         body: Repo.vaccineData == null
             ? Center(
                 child: CircularProgressIndicator(),
@@ -113,9 +116,55 @@ class _CountryWidgetState extends State<CountryWidget> {
                   children: [
                     Expanded(
                       child: Center(
-                        child: Text(
-                          "$selectedCountry",
-                          style: Theme.of(context).textTheme.headline2,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Focus(
+                              onFocusChange: (hasFocus) {
+                                setState(() {
+                                  _hasFocus = hasFocus;
+                                });
+                              },
+                              child: TextField(
+                                controller: _textController,
+                                onChanged: (_) {
+                                  setState(_runQuery);
+                                },
+                                autofocus: false,
+                                style: Theme.of(context).textTheme.headline2,
+                                textAlign: TextAlign.center,
+                                decoration: InputDecoration(
+                                    border: InputBorder.none,
+                                    hintText:
+                                        !_hasFocus ? selectedCountry : ""),
+                              ),
+                            ),
+                            AnimatedOpacity(
+                              opacity: _hasFocus ? 1.0 : 0.0,
+                              duration: Duration(milliseconds: 300),
+                              child: SizedBox(
+                                height: countryPickerHeight,
+                                child: ListView.builder(
+                                    itemCount: _countriesQuery.length,
+                                    scrollDirection: Axis.horizontal,
+                                    itemBuilder: (context, index) {
+                                      return InkWell(
+                                        onTap: _hasFocus
+                                            ? () => Vaxx2021App.selectCountry(
+                                                _countriesQuery[index])
+                                            : null,
+                                        child: Center(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(
+                                                countryPickerPadding),
+                                            child: Text(_countriesQuery[index]),
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                              ),
+                            )
+                          ],
                         ),
                       ),
                     ),

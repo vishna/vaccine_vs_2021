@@ -131,122 +131,141 @@ class _CountryWidgetState extends State<CountryWidget> {
             ? Center(
                 child: CircularProgressIndicator(),
               )
-            : Center(
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Focus(
-                              onFocusChange: (hasFocus) {
-                                setState(() {
-                                  _hasFocus = hasFocus;
-                                  if (hasFocus) {
-                                    _runQuery();
-                                  }
-                                });
-                              },
-                              child: TextField(
-                                controller: _textController,
-                                onChanged: (_) {
-                                  setState(_runQuery);
+            : LayoutBuilder(builder: (context, constraints) {
+                final contentWidth =
+                    max(constraints.maxWidth / 2, contentWidthBreak);
+                final isSmall = constraints.maxWidth / 2 < contentWidthBreak;
+                return CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: SafeArea(
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (!isSmall)
+                                SizedBox(
+                                  height: countryPickerHeight,
+                                ),
+                              Focus(
+                                onFocusChange: (hasFocus) {
+                                  setState(() {
+                                    _hasFocus = hasFocus;
+                                    if (hasFocus) {
+                                      _runQuery();
+                                    }
+                                  });
                                 },
-                                onSubmitted: (_) {
-                                  final countryIndex =
-                                      _carouselController.centerIndex.round();
-                                  Vaxx2021App.selectCountry(
-                                      countries[countryIndex]);
-                                },
-                                autofocus: false,
-                                style: Theme.of(context).textTheme.headline2,
-                                textAlign: TextAlign.center,
-                                decoration: InputDecoration(
-                                    border: InputBorder.none,
-                                    hintText:
-                                        !_hasFocus ? selectedCountry : ""),
+                                child: TextField(
+                                  controller: _textController,
+                                  onChanged: (_) {
+                                    setState(_runQuery);
+                                  },
+                                  onSubmitted: (_) {
+                                    final countryIndex =
+                                        _carouselController.centerIndex.round();
+                                    Vaxx2021App.selectCountry(
+                                        countries[countryIndex]);
+                                  },
+                                  autofocus: false,
+                                  style: Theme.of(context).textTheme.headline2,
+                                  textAlign: TextAlign.center,
+                                  decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      hintText:
+                                          !_hasFocus ? selectedCountry : ""),
+                                ),
                               ),
-                            ),
-                            AnimatedOpacity(
-                              opacity: _hasFocus ? 1.0 : 0.0,
-                              duration: Duration(milliseconds: 300),
-                              child: SizedBox(
-                                height: countryPickerHeight,
-                                child: Carousel(
-                                    controller: _carouselController,
-                                    itemCount: countries.length,
-                                    itemBuilder: (context, index) {
-                                      return InkWell(
-                                        onTap: _hasFocus
-                                            ? () => Vaxx2021App.selectCountry(
-                                                countries[index])
-                                            : null,
-                                        child: Center(
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(
-                                                countryPickerPadding),
-                                            child: Text(countries[index]),
+                              AnimatedOpacity(
+                                opacity: _hasFocus ? 1.0 : 0.0,
+                                duration: Duration(milliseconds: 300),
+                                child: SizedBox(
+                                  height: countryPickerHeight,
+                                  child: Carousel(
+                                      controller: _carouselController,
+                                      itemCount: countries.length,
+                                      itemBuilder: (context, index) {
+                                        return InkWell(
+                                          onTap: _hasFocus
+                                              ? () => Vaxx2021App.selectCountry(
+                                                  countries[index])
+                                              : null,
+                                          child: Center(
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(
+                                                  countryPickerPadding),
+                                              child: Text(countries[index]),
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    }),
-                              ),
-                            )
-                          ],
+                                        );
+                                      }),
+                                ),
+                              )
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                    LayoutBuilder(builder: (context, constraints) {
-                      final contentWidth =
-                          max(constraints.maxWidth / 2, contentWidthBreak);
-                      final isSmall =
-                          constraints.maxWidth / 2 < contentWidthBreak;
-                      return Wrap(
-                        children: <Widget>[
-                          SizedBox(
-                            width: contentWidth,
-                            child: _ProgressInfoWidget(
-                              title: 'Vaccination Progress',
-                              progress: vaccinationProgress
-                                      .peopleFullyVaccinated
-                                      .toDouble() /
-                                  100.0,
-                              frontProgress: vaccinationProgress
-                                      .peopleVaccinated
-                                      .toDouble() /
-                                  100.0,
-                              isSmall: isSmall,
-                              reverse: !isSmall,
-                              description: _VaccinationDescription(
-                                isSmall: isSmall,
-                                vaccinationProgress: vaccinationProgress,
-                              ),
+                    SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Spacer(
+                              flex: 1,
                             ),
-                          ),
-                          SizedBox(
-                            width: contentWidth,
-                            child: _ProgressInfoWidget(
-                              title: '2021 Progress',
-                              progress: yearProgress(vaccinationProgress.date),
-                              isSmall: isSmall,
-                              description: _YearDescription(
-                                onTap: () {
-                                  setState(() {
-                                    _daysBack++;
-                                  });
-                                },
-                                date: vaccinationProgress.date,
-                              ),
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: <Widget>[
+                                SizedBox(
+                                  width: contentWidth,
+                                  child: _ProgressInfoWidget(
+                                    title: 'Vaccination Progress',
+                                    progress: vaccinationProgress
+                                            .peopleFullyVaccinated
+                                            .toDouble() /
+                                        100.0,
+                                    frontProgress: vaccinationProgress
+                                            .peopleVaccinated
+                                            .toDouble() /
+                                        100.0,
+                                    isSmall: isSmall,
+                                    reverse: !isSmall,
+                                    description: _VaccinationDescription(
+                                      isSmall: isSmall,
+                                      vaccinationProgress: vaccinationProgress,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: contentWidth,
+                                  child: _ProgressInfoWidget(
+                                    title: '2021 Progress',
+                                    progress:
+                                        yearProgress(vaccinationProgress.date),
+                                    isSmall: isSmall,
+                                    description: _YearDescription(
+                                      onTap: () {
+                                        setState(() {
+                                          _daysBack++;
+                                        });
+                                      },
+                                      date: vaccinationProgress.date,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      );
-                    }),
-                    _Footer(),
+                            Spacer(
+                              flex: 2,
+                            ),
+                            _Footer(),
+                          ],
+                        )),
                   ],
-                ),
-              ),
+                );
+              }),
       ),
     );
   }
@@ -319,27 +338,25 @@ class _YearDescription extends StatelessWidget {
 class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            MarkdownBody(
-              styleSheet:
-                  MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                      a: const TextStyle(
-                color: linkColor,
-              )),
-              onTapLink: (text, href, title) {
-                url_launcher.launch(href);
-              },
-              data: footerNote,
-            ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          MarkdownBody(
+            styleSheet:
+                MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                    a: const TextStyle(
+              color: linkColor,
+            )),
+            onTapLink: (text, href, title) {
+              url_launcher.launch(href);
+            },
+            data: footerNote,
+          ),
+        ],
       ),
     );
   }
